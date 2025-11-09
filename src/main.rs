@@ -5,8 +5,26 @@ use std::{
     io::{self, Read},
     path::PathBuf,
 };
-use wordfreq_rs::output::{render_json, render_table};
+use wordfreq_rs::output::{render_csv, render_json, render_table};
 use wordfreq_rs::{count, sort_alpha, sort_by_count_then_alpha, tokenize};
+
+#[derive(Copy, Clone, Debug, ValueEnum)]
+enum SortBy {
+    Count,
+    Alpha,
+}
+
+#[derive(Copy, Clone, Debug, ValueEnum)]
+enum Format {
+    /// Plain text table
+    Table,
+
+    /// JSON array: [{"word": "...", "count": N}, ...]
+    Json,
+
+    /// CSV with header: word,count
+    Csv,
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "wordfreq-rs", about = "Count word frequencies from text")]
@@ -31,19 +49,13 @@ struct Args {
     #[arg(long, value_enum, default_value_t = SortBy::Count)]
     sort_by: SortBy,
 
-    /// Output as JSON instead of text table
-    #[arg(long)]
-    json: bool,
+    /// Output format
+    #[arg(long, value_enum, default_value_t = Format::Table)]
+    format: Format,
 
-    /// Output as CSV instead of text table
+    /// Pretty-print when fformat=json (ignored for others)
     #[arg(long)]
-    csv: bool,
-}
-
-#[derive(Copy, Clone, Debug, ValueEnum)]
-enum SortBy {
-    Count,
-    Alpha,
+    pretty: bool,
 }
 
 fn main() -> Result<()> {
@@ -78,12 +90,29 @@ fn main() -> Result<()> {
     }
 
     // Output
-    if args.json {
-        println!("{}", render_json(&entries)?);
-    } else if args.csv {
-        println!("{}", wordfreq_rs::output::render_csv(&entries)?);
-    } else {
-        print!("{}", render_table(&entries));
+    match args.format {
+        Format::Table => {
+            print!("{}", render_table(&entries));
+        }
+        Format::Json => {
+            if args.pretty {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(
+                        &entries
+                            .iter()
+                            .map(|(w, c)| serde_json::json!({ "word": w, "count": c }))
+                            .collect::<Vec<_>>()
+                    )?
+                );
+            } else {
+                println!("{}", render_json(&entries)?);
+            }
+        }
+        Format::Csv => {
+            print!("{}", render_csv(&entries)?);
+        }
     }
+
     Ok(())
 }

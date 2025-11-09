@@ -36,7 +36,7 @@ pub fn render_json(entries: &[(String, u64)]) -> serde_json::Result<String> {
         .iter()
         .map(|(word, count)| json!({ "word": word, "count": count }))
         .collect();
-    serde_json::to_string_pretty(&v)
+    serde_json::to_string(&v)
 }
 
 /// Render entries as CSV with header `word,count`
