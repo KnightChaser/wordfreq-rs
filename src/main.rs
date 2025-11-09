@@ -94,7 +94,7 @@ fn main() -> Result<()> {
             .iter()
             .map(|(word, count)| serde_json::json!({ "word": word, "count": count }))
             .collect();
-        println!("{}", serde_json::to_string(&json_vec)?);
+        println!("{}", serde_json::to_string_pretty(&json_vec)?);
     } else {
         // Show the result as simple table instead
         if entries.is_empty() {
