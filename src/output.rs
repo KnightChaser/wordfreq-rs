@@ -38,3 +38,19 @@ pub fn render_json(entries: &[(String, u64)]) -> serde_json::Result<String> {
         .collect();
     serde_json::to_string_pretty(&v)
 }
+
+/// Render entries as CSV with header `word,count`
+/// Escaping/quoting is handled by the `csv` crate (RFC 4180)
+pub fn render_csv(entries: &[(String, u64)]) -> Result<String, csv::Error> {
+    let mut buffer = Vec::new();
+    {
+        let mut csv_writer = csv::Writer::from_writer(&mut buffer);
+        csv_writer.write_record(["word", "count"])?;
+        for (word, count) in entries {
+            csv_writer.write_record([word, &count.to_string()])?;
+        }
+        csv_writer.flush()?;
+    }
+
+    Ok(String::from_utf8(buffer).unwrap_or_default())
+}

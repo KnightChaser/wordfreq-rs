@@ -34,6 +34,10 @@ struct Args {
     /// Output as JSON instead of text table
     #[arg(long)]
     json: bool,
+
+    /// Output as CSV instead of text table
+    #[arg(long)]
+    csv: bool,
 }
 
 #[derive(Copy, Clone, Debug, ValueEnum)]
@@ -76,6 +80,8 @@ fn main() -> Result<()> {
     // Output
     if args.json {
         println!("{}", render_json(&entries)?);
+    } else if args.csv {
+        println!("{}", wordfreq_rs::output::render_csv(&entries)?);
     } else {
         print!("{}", render_table(&entries));
     }
